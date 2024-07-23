@@ -1,1 +1,2 @@
 app-python/venv*
+k8s-resources/Charts/**/*charts

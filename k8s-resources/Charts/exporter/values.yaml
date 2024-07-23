@@ -1,0 +1,33 @@
+image: 
+  repository: local.registry/p-exporter-app
+  tag: 1.0.0
+
+service:
+  type: NodePort
+  port: 2113
+
+env:
+  APP_PORT: "2113"
+  APP_DEBUG: "true"
+  DOCKERHUB_ORGANIZATION: amazon
+  IMAGE_TIME_FRAME_SECONDS: "13114080"
+  DOCKERHUB_REGISTRY_URL: "https://hub.docker.com/v2/repositories"
+
+prometheus:
+  serverFiles:
+    prometheus.yml:
+        scrape_configs:
+        - job_name: python-exporter
+          static_configs:
+            - targets:
+              - p-exporter-app:2113
+          scrape_interval: 1m
+          scrape_timeout: 30s
+  alertmanager:
+    enabled: false
+  kube-state-metrics:
+    enabled: false
+  prometheus-node-exporter:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false

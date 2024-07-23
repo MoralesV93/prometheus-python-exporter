@@ -1,0 +1,11 @@
+apiVersion: v2
+name: app
+appVersion: "1.0"
+description: A Helm chart for Prometheus exporter app in python
+version: 1.0.0
+type: application
+
+dependencies:
+  - name: prometheus
+    repository: https://prometheus-community.github.io/helm-charts
+    version: 25.24.1
