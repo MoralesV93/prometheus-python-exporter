@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: p-exporter-app
+  name: p-exporter-app
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: p-exporter-app
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: p-exporter-app
+    spec:
+      containers:
+      - image: local.registry/p-exporter-app:1.0.0
+        name: p-exporter-app
+        env:
+          - name: APP_PORT
+            value: "80"
+          - name: APP_DEBUG
+            value: "true"
+          - name: DOCKERHUB_ORGANIZATION
+            value: p-exporter
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: p-exporter-app
+  namespace: default
+spec:
+  selector:
+    app: p-exporter-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 2113
+  type: NodePort
