@@ -1,34 +1,63 @@
-from flask import Flask, Response
-from prometheus_client import start_http_server, Gauge, generate_latest
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import os
 import requests
+from flask import Flask, Response,jsonify
+from prometheus_client import Gauge, generate_latest
+from datetime import datetime, timezone, timedelta
+from dateutil import parser
 
 app = Flask(__name__)
 
 
+def get_image_list_by_time_frame(_imagesList:list):
+    now = datetime.now(timezone.utc)
+    image_sorted = sorted(_imagesList, key=lambda image:image['last_updated'],reverse=True)
+    image_list = []
+    for image in image_sorted:
+        last_updated = parser.isoparse(image['last_updated'])
+        if (now - last_updated).total_seconds()<=IMAGE_TIME_FRAME_SECONDS:
+            image_list.append(image)
+        break
+    return image_list
+
+
 def get_dockerhub_repositories():
-    url = f'https://hub.docker.com/v2/repositories/{DOCKERHUB_ORGANIZATION}/'
-    response = requests.get(url)
-    response.raise_for_status()
-    repositories = response.json()
+    try:
+        url = f'{DOCKERHUB_REGISTRY_URL}/{DOCKERHUB_ORGANIZATION}/'
+        response = requests.get(url)
+        response.raise_for_status()
+        repositories = response.json()
+        images_list = get_image_list_by_time_frame(repositories['results'])
+        image_pulls = {}
+        for image in images_list:
+            image_name = image['name']
+            pull_count = image['pull_count']
+            image_pulls[image_name] = pull_count
 
-    image_pulls = {}
-    for image in repositories['results']:
-        image_name = image['name']
-        pull_count = image['pull_count']
-        image_pulls[image_name] = pull_count
-
-    return image_pulls
+        return image_pulls
+    except Exception as e:
+        raise e
 
 @app.route('/metrics')
 def metrics():
-    image_pulls = get_dockerhub_repositories()
-    for image_name, pull_count in image_pulls.items():
-        DOCKER_IMAGE_PULLS.labels(image=image_name,organization=DOCKERHUB_ORGANIZATION).set(pull_count)
-    return Response(
-            response= generate_latest(),
-            content_type="text/plain"
+    try:
+        image_pulls = get_dockerhub_repositories()
+        for image_name, pull_count in image_pulls.items():
+            DOCKER_IMAGE_PULLS.labels(image=image_name,organization=DOCKERHUB_ORGANIZATION).set(pull_count)
+        return Response(
+                response= generate_latest(),
+                content_type="text/plain"
+            )
+    except requests.exceptions.HTTPError as http_err:
+        return Response(
+            response=jsonify({'error': f'HTTP error occurred: {http_err}'}),
+            content_type="application/json",
+            status=500
+            )
+    except Exception as e:
+        return Response(
+            response={"error":str(e)},
+            content_type="application/json",
+            status=500
         )
 
 def server():
@@ -40,6 +69,8 @@ def server():
 
 if __name__ == '__main__':
     DOCKER_IMAGE_PULLS = Gauge('docker_image_pulls', 'Number of DockerHub image pulls', ['image','organization'])
+    IMAGE_TIME_FRAME_SECONDS = int(os.environ.get('IMAGE_TIME_FRAME_SECONDS', 5))
+    DOCKERHUB_REGISTRY_URL = os.environ.get('DOCKERHUB_REGISTRY_URL','https://hub.docker.com/v2/repositories')
     DOCKERHUB_ORGANIZATION = os.environ.get('DOCKERHUB_ORGANIZATION', "amazon")
     
     server()

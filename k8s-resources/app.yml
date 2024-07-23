@@ -21,7 +21,7 @@ spec:
         name: p-exporter-app
         env:
           - name: APP_PORT
-            value: "80"
+            value: "2113"
           - name: APP_DEBUG
             value: "true"
           - name: DOCKERHUB_ORGANIZATION
@@ -37,6 +37,6 @@ spec:
     app: p-exporter-app
   ports:
     - protocol: TCP
-      port: 80
+      port: 2113
       targetPort: 2113
   type: NodePort
