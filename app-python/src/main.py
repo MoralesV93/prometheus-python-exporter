@@ -16,7 +16,8 @@ def get_image_list_by_time_frame(_imagesList:list):
         last_updated = parser.isoparse(image['last_updated'])
         if (now - last_updated).total_seconds()<=IMAGE_TIME_FRAME_SECONDS:
             image_list.append(image)
-        break
+        else:
+            break
     return image_list
 
 
