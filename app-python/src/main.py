@@ -17,4 +17,4 @@ def get_metrics():
 if __name__ == '__main__':
     port = int(os.environ.get('APP_PORT', 2113))
     debug= bool(os.environ.get('APP_DEBUG',True))
-    app.run(debug=True, port=port)
+    app.run(host='0.0.0.0',debug=True, port=port)
