@@ -1,16 +1,17 @@
+from datetime import datetime, timezone
 import os
-import requests
-from flask import Flask, Response,jsonify
 from prometheus_client import Gauge, generate_latest
-from datetime import datetime, timezone, timedelta
+from flask import Flask, Response,jsonify
 from dateutil import parser
+import requests
+
 
 app = Flask(__name__)
 
 
-def get_image_list_by_time_frame(_imagesList:list):
+def get_image_list_by_time_frame(image_list:list):
     now = datetime.now(timezone.utc)
-    image_sorted = sorted(_imagesList, key=lambda image:image['last_updated'],reverse=True)
+    image_sorted = sorted(image_list, key=lambda imagerror:image['last_updated'],reverse=True)
     image_list = []
     for image in image_sorted:
         last_updated = parser.isoparse(image['last_updated'])
@@ -35,8 +36,8 @@ def get_dockerhub_repositories():
             image_pulls[image_name] = pull_count
 
         return image_pulls
-    except Exception as e:
-        raise e
+    except Exception as error:
+        raise error
 
 @app.route('/metrics')
 def metrics():
@@ -54,9 +55,15 @@ def metrics():
             content_type="application/json",
             status=500
             )
-    except Exception as e:
+    except requests.exceptions.ConnectionError as http_err:
         return Response(
-            response={"error":str(e)},
+            response=jsonify({'error': f'ConnectionError error occurred: {http_err}'}),
+            content_type="application/json",
+            status=500
+            )
+    except Exception as error:
+        return Response(
+            response={"error":str(error)},
             content_type="application/json",
             status=500
         )
@@ -64,7 +71,6 @@ def metrics():
 def server():
     port = int(os.environ.get('APP_PORT', 2113))
     debug= bool(os.environ.get('APP_DEBUG',True))
-    
     app.run(host='0.0.0.0', port=port, debug=debug)
 
 

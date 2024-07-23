@@ -17,6 +17,9 @@ spec:
         app: p-exporter-app
     spec:
       containers:
+      - image: local.registry/camunda-app:1.0.0
+        imagePullPolicy: IfNotPresent
+        name: camunda-app
       - image: local.registry/p-exporter-app:1.0.0
         name: p-exporter-app
         env:
@@ -25,7 +28,11 @@ spec:
           - name: APP_DEBUG
             value: "true"
           - name: DOCKERHUB_ORGANIZATION
-            value: p-exporter
+            value: amazon
+          - name: IMAGE_TIME_FRAME_SECONDS
+            value: "13114080"
+          - name: DOCKERHUB_REGISTRY_URL
+            value: "https://hub.docker.com/v2/repositories"
 ---
 apiVersion: v1
 kind: Service
