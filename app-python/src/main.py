@@ -79,5 +79,4 @@ if __name__ == '__main__':
     IMAGE_TIME_FRAME_SECONDS = int(os.environ.get('IMAGE_TIME_FRAME_SECONDS', 5))
     DOCKERHUB_REGISTRY_URL = os.environ.get('DOCKERHUB_REGISTRY_URL','https://hub.docker.com/v2/repositories')
     DOCKERHUB_ORGANIZATION = os.environ.get('DOCKERHUB_ORGANIZATION', "amazon")
-    
     server()
